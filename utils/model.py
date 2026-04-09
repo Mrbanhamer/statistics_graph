@@ -11,3 +11,6 @@ class Rate():
 class Currency():
     def __init__(self, iso_code, iso_numeric, name, symbol):
         self.iso_code = iso_code 
+        self.iso_numeric = iso_numeric
+        self.name = name
+        self.symbol = symbol
