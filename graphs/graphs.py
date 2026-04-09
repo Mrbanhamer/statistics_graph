@@ -1,77 +1,45 @@
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-def sek(data):
-    # We need to extract the rates and dates into two separate lists for plotting
-    rates = []
-    dates = []
+def graph(sek_data, usd_data, gbp_data):
+    # Helper function to extract dates and rates from the list of dicts
+    def process_data(data_list):
+        dates = []
+        rates = []
+        for entry in data_list:
+            # Note: Frankfurter API usually uses YYYY-MM-DD
+            # If your dates are DD-MM-YYYY, keep your current format
+            clean_date = datetime.strptime(entry['date'], "%Y-%m-%d")
+            dates.append(clean_date)
+            rates.append(entry['rate'])
+        return dates, rates
 
-    for entry in data:
-        # entry is now {'rate': 11.20, 'date': '10-10-2025'}
-        # We convert the date string to a real date object immediately
-        clean_date = datetime.strptime(entry['date'], "%d-%m-%Y")
-        
-        # If you wanted to filter (e.g., only even rates), you do it here:
-        if entry['rate'] % 2 == 0:
-            # Maybe you only want even numbers? 
-            # (Though in currency, rates are rarely whole even numbers!)
-            pass 
-        
-        rates.append(entry['rate'])
-        dates.append(clean_date)
+    # Extract data for all three
+    sek_dates, sek_rates = process_data(sek_data)
+    usd_dates, usd_rates = process_data(usd_data)
+    gbp_dates, gbp_rates = process_data(gbp_data)
 
-    # Now we plot. Remember: (X-axis, Y-axis)
-    # We put dates on X so the line moves from left to right over time.
-    fig, ax = plt.subplots(figsize=(8, 4))
-    ax.plot(dates, rates, marker='o', color='green', label='SEK Rate')
+    fig, ax = plt.subplots(figsize=(12, 6))
 
+    # Plot each line with a different color and label
+    ax.plot(sek_dates, sek_rates, label='SEK (Swedish Krona)', color='blue', linewidth=2)
+    ax.plot(usd_dates, usd_rates, label='USD (US Dollar)', color='green', linewidth=2)
+    ax.plot(gbp_dates, gbp_rates, label='GBP (British Pound)', color='red', linewidth=2)
+
+    # Formatting the chart
     ax.set(xlabel='Date', 
-           ylabel='Rate (SEK)',
-           title='EUR to SEK conversion over time')
+           ylabel='Rate (Relative to 1 EUR)',
+           title='European Currency Exchange Rates Over Time')
     
-    ax.grid(True)
-    fig.autofmt_xdate() # Keeps the dates from overlapping
-    plt.legend()
+    ax.grid(True, linestyle='--', alpha=0.6)
+    fig.autofmt_xdate() # Prevents date overlap
+    
+    # Add a legend so we know which color is which
+    ax.legend()
+
+    plt.tight_layout()
     plt.show()
 
-# Example of your new "Rate-First" data format:
-history_data = [
-    {'rate': 11.22, 'date': '10-10-2025'},
-    {'rate': 11.45, 'date': '11-10-2025'},
-    {'rate': 11.30, 'date': '12-10-2025'}
-]
-
-sek(history_data)
-
-def pounds(data):
-        # We need to extract the rates and dates into two separate lists for plotting
-    rates = []
-    dates = []
-
-    for entry in data:
-        # entry is now {'rate': 11.20, 'date': '10-10-2025'}
-        # We convert the date string to a real date object immediately
-        clean_date = datetime.strptime(entry['date'], "%d-%m-%Y")
-        
-        # If you wanted to filter (e.g., only even rates), you do it here:
-        if entry['rate'] % 2 == 0:
-            # Maybe you only want even numbers? 
-            # (Though in currency, rates are rarely whole even numbers!)
-            pass 
-        
-        rates.append(entry['rate'])
-        dates.append(clean_date)
-
-    # Now we plot. Remember: (X-axis, Y-axis)
-    # We put dates on X so the line moves from left to right over time.
-    fig, ax = plt.subplots(figsize=(8, 4))
-    ax.plot(dates, rates, marker='o', color='green', label='Pounds Rate')
-
-    ax.set(xlabel='Date', 
-           ylabel='Rate (Pounds)',
-           title='EUR to Pounds conversion over time')
-    
-    ax.grid(True)
-    fig.autofmt_xdate() # Keeps the dates from overlapping
-    plt.legend()
-    plt.show()
+# To run it, use the data from your connecting() function:
+# sek, usd, gbp = connecting()
+# graph(sek, usd, gbp)
