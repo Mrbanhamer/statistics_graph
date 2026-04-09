@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 from datetime import datetime
+from scipy import stats
 
 def graph(sek_data, usd_data, gbp_data):
     # Helper function to extract dates and rates from the list of dicts
@@ -75,6 +76,55 @@ def plot_averages(sek_data, usd_data, gbp_data):
 
     plt.show()
 
+def calculate_stats(sek_data, usd_data, gbp_data):
+    def get_rates(data_list):
+        return [entry['rate'] for entry in data_list]
+
+    # Extract rates
+    rates_dict = {
+        "SEK": get_rates(sek_data),
+        "USD": get_rates(usd_data),
+        "GBP": get_rates(gbp_data)
+    }
+
+    results = {}
+    
+    # We compare each currency's mean to the value 1.0 (The Euro)
+    for name, rates in rates_dict.items():
+        # stats.ttest_1samp tests if the list mean is different from popmean (1.0)
+        t_stat, p_val = stats.ttest_1samp(rates, popmean=1.0)
+        results[name] = {"t": t_stat, "p": p_val, "mean": sum(rates)/len(rates)}
+
+    # --- Visualization ---
+    labels = list(results.keys())
+    means = [results[l]["mean"] for l in labels]
+    p_values = [results[l]["p"] for l in labels]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+
+    # Graph 1: How far the average is from the Euro (1.0)
+    ax1.bar(labels, means, color=['blue', 'green', 'red'], alpha=0.6)
+    ax1.axhline(y=1.0, color='black', linestyle='--', label='Euro (Base 1.0)')
+    ax1.set_title("Average Rate vs. Euro")
+    ax1.set_ylabel("Value of 1 Euro")
+    ax1.legend()
+
+    # Graph 2: The P-Value (Is the distance "Real"?)
+    # We use a threshold of 0.05. If the bar is BELOW the line, it's significant.
+    ax2.bar(labels, p_values, color='purple')
+    ax2.axhline(y=0.05, color='red', linestyle='--', label='Significance (0.05)')
+    ax2.set_yscale('log') # Log scale helps see very small p-values
+    ax2.set_title("Statistical Significance (P-Value)")
+    ax2.set_ylabel("Probability (P)")
+    ax2.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+    # Print results for your presentation notes
+    for name, data in results.items():
+        status = "Significantly Different" if data["p"] < 0.05 else "Not Significantly Different"
+        print(f"{name}: Mean={data['mean']:.2f}, P-Value={data['p']:.4e} ({status})")
 # Usage:
 # sek, usd, gbp = connecting()
 # plot_averages(sek, usd, gbp)
